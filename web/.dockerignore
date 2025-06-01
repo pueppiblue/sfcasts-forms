@@ -1,0 +1,9 @@
+node_modules
+vendor
+
+var
+
+public/build/screenshots/*
+public/build/build-pdf/*
+public/build/images/*
+public/build/uploads/*

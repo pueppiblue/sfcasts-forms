@@ -1,0 +1,55 @@
+services:
+  web:
+    build:
+      context: ./web
+      args:
+        APP_ENVIRONMENT: 'dev'
+    environment:
+      - APP_DEBUG=${APP_DEBUG:-0}
+      - APP_ENVIRONMENT=${APP_ENVIRONMENT:-prod}
+      - APP_SECRET=${APP_SECRET:?APP_SECRET is not set or empty}
+      - TRUSTED_HOSTS=^(127\.0\.0\.1|localhost|((${SUBDOMAINS_LIST}\.)?${DOMAIN_NAME}))$$
+      - CORS_ALLOW_ORIGIN=^https://(${SUBDOMAINS_LIST}\.)?${DOMAIN_NAME}$$
+      - HOST_UID=${HOST_UID} # set in ~/.bashrc
+      - HOST_GID=${HOST_GID} # set in ~/.bashrc
+      - CONTAINER_USER=docker
+      - CONTAINER_GROUP=docker
+      - PHP_XDEBUG_ENABLED=${PHP_XDEBUG_ENABLED:?PHP_XDEBUG_ENABLED is not set or empty}
+      - DEPLOY_ENV=${DEPLOY_ENV:?DEPLOY_ENV is not set or empty}
+      - VIRTUAL_HOST=${VIRTUAL_HOST:?VIRTUAL_HOST is not set or empty}
+      - VIRTUAL_PORT=443
+      - VIRTUAL_PROTO=https
+      - DB_NAME=${DB_NAME:?DB_NAME is not set or empty}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is not set or empty}
+      - DB_USER=${DB_USER:?DB_USER is not set or empty}
+      - PHP_IDE_CONFIG=${PHP_IDE_CONFIG:-serverName=localhost}
+      - OUTER_PORT_VITE=5432
+      - OUTER_PORT_STORYBOOK=5433
+    volumes:
+      - ${VOLUME_DIR_WEB:?VOLUME_DIR_WEB is not set or empty}symfony-logs/:/var/www/html/var/log/
+      - ./web/:/var/www/html
+      - ../nginx-proxy/certs:/var/www/certs # adjust to the place of your nginx-proxy; just needed for vite dev
+    restart: "no"
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    command: [ '--sql_mode=','--default-authentication-plugin=mysql_native_password' ]
+    volumes:
+      - ${VOLUME_DIR_MYSQL:?VOLUME_DIR_MYSQL is not set or empty}:/var/lib/mysql/
+    restart: "always"
+    #    expose:
+    #      - 3306
+    stop_grace_period: 2m
+    environment:
+      - TZ=Europe/Berlin
+      - MYSQL_DATABASE=${DB_NAME:?DB_NAME is not set or empty}
+      - MYSQL_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is not set or empty}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:?DB_ROOT_PASSWORD is not set or empty}
+      - MYSQL_USER=${DB_USER:?DB_USER is not set or empty}
+
+networks:
+  default:
+    name: sfcast-forms-${DEPLOY_ENV?:DEPLOY_ENV is not set or empty}
+    external: true
