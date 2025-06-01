@@ -1,0 +1,7 @@
+#phpstorm IDEA config
+/.idea/
+
+# docker
+/.env
+docker-compose.override.yml
+/volumes
