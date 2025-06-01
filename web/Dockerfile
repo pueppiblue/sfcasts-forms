@@ -113,6 +113,14 @@ RUN cd /var/www/html; \
 WORKDIR /var/www/html
 COPY . /var/www/html
 
+# Use this self-generated certificate only in dev, IT IS NOT SECURE!
+RUN openssl genrsa -des3 -passout pass:NotSecure -out cert.pass.key 2048
+RUN openssl rsa -passin pass:NotSecure -in cert.pass.key -out /etc/ssl/private/cert.key
+RUN rm cert.pass.key
+RUN openssl req -new -passout pass:NotSecure -key /etc/ssl/private/cert.key -out /etc/ssl/private/cert.csr \
+    -subj '/C=SS/ST=SS/L=Entenhausen/O=Dockini Dev/CN=localhost'
+RUN openssl x509 -req -sha256 -days 365 -in /etc/ssl/private/cert.csr -signkey /etc/ssl/private/cert.key -out /etc/ssl/private/cert.crt
+
 WORKDIR /var/www/html
 # commit start-project with 775 permissions to repository
 COPY .docker/start-project.sh /start-project.sh
